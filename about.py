@@ -1,0 +1,22 @@
+def main():
+    print("\n==============================")
+    print("About Public Sentiment CLI")
+    print("==============================")
+    print("This is a console-based project that analyzes public opinion on trending topics.")
+    print("")
+    print("Current version:")
+    print("- Fetches trending posts and comments from Reddit")
+    print("- Extracts key entities from each topic")
+    print("- Classifies stance (support/oppose/neutral) and summarizes reasons using keywords + examples")
+    print("")
+    print("Planned future versions:")
+    print("- Add more sources (e.g., X/Twitter, Instagram, YouTube, news comments)")
+    print("- Better topic/entity selection and cleaner 'sides'")
+    print("- Counter-arguments and disagreement mapping")
+    print("- Optional UI (web app/dashboard) and export to JSON/CSV")
+    print("")
+    print("Note: Results depend on available comments and model accuracy; they are not ground truth.")
+    print("")
+
+if __name__ == "__main__":
+    main()
