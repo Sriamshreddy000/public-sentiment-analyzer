@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.venv/
+reddit.db
+.env
+.DS_Store
