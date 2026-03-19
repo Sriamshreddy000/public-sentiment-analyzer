@@ -9,6 +9,8 @@ def fetch_unlabeled(limit=80):
             JOIN post_entities e ON e.post_id = c.post_id
             LEFT JOIN comment_entity_stance s ON s.comment_id = c.comment_id
             WHERE s.comment_id IS NULL
+              AND e.entity_a IS NOT NULL
+              AND e.entity_b IS NOT NULL
             LIMIT ?
         """, (limit,)).fetchall()
 
@@ -28,10 +30,6 @@ def main():
     rows = fetch_unlabeled(200)
 
     for cid, body, post_id, a, b in rows:
-        if not a or not b:
-            # if only one entity, treat as neutral for now (next step will handle single-topic stance)
-            continue
-
         stance_a, score_a = stance_to_entity(body, a)
         stance_b, score_b = stance_to_entity(body, b)
 

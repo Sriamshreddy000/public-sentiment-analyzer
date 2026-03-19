@@ -72,6 +72,17 @@ def init_db():
         """)
 
         conn.execute("""
+        CREATE TABLE IF NOT EXISTS comment_topic_stance (
+            comment_id TEXT PRIMARY KEY,
+            post_id TEXT NOT NULL,
+            topic_label TEXT,
+            stance_label TEXT,
+            stance_score REAL,
+            FOREIGN KEY(post_id) REFERENCES posts(post_id)
+        )
+        """)
+
+        conn.execute("""
         CREATE TABLE IF NOT EXISTS post_entities (
             post_id TEXT PRIMARY KEY,
             entity_a TEXT,

@@ -16,16 +16,27 @@ def fetch_post_by_index(topic_index: int):
     conn.close()
     return row
 
-def fetch_labeled_comments(post_id: str, min_len: int):
-    """
-    Fetch labeled comments for a post with a minimum length filter.
-    We'll try strict first, then fallback if needed.
-    """
+def fetch_entity_labeled_comments(post_id: str, min_len: int):
     conn = sqlite3.connect(DB)
     rows = conn.execute("""
         SELECT c.body, s.combined_label
         FROM comments c
         JOIN comment_entity_stance s ON s.comment_id = c.comment_id
+        WHERE c.post_id = ?
+          AND c.body IS NOT NULL
+          AND length(c.body) >= ?
+          AND lower(c.body) NOT LIKE 'users often report submissions%'
+          AND lower(c.body) NOT LIKE '%i am a bot%'
+    """, (post_id, min_len)).fetchall()
+    conn.close()
+    return rows
+
+def fetch_topic_labeled_comments(post_id: str, min_len: int):
+    conn = sqlite3.connect(DB)
+    rows = conn.execute("""
+        SELECT c.body, s.stance_label
+        FROM comments c
+        JOIN comment_topic_stance s ON s.comment_id = c.comment_id
         WHERE c.post_id = ?
           AND c.body IS NOT NULL
           AND length(c.body) >= ?
@@ -75,28 +86,15 @@ def bar(cnt, total, width=28):
     filled = int(round((cnt / total) * width))
     return "█" * filled + "░" * (width - filled)
 
-def show_topic_report(topic_index: int):
-    row = fetch_post_by_index(topic_index)
-    if not row:
-        print("Invalid topic number (no such topic in DB).")
-        return
-
-    post_id, title, subreddit, url, a, b = row
-
-    print("\n" + "=" * 95)
-    print(f"TOPIC #{topic_index}: {title}")
-    print(f"subreddit=r/{subreddit} | post_id={post_id}")
-    if url:
-        print(f"url={url}")
-    print(f"entities = ({a}, {b})")
-
-    # Try strict first, then fallback so it never looks “empty”
-    comments = fetch_labeled_comments(post_id, min_len=40)
+def load_comments_with_fallback(post_id: str, fetcher):
+    comments = fetcher(post_id, min_len=40)
     used_len = 40
     if not comments:
-        comments = fetch_labeled_comments(post_id, min_len=10)
+        comments = fetcher(post_id, min_len=10)
         used_len = 10
+    return comments, used_len
 
+def render_comment_report(comments, used_len: int):
     if not comments:
         print("\nNo labeled comments found for this topic yet.")
         print("Tip: Run option 2 (Refresh) to refetch + analyze.")
@@ -139,6 +137,31 @@ def show_topic_report(topic_index: int):
         print("examples:")
         for i, r in enumerate(reps, start=1):
             print(f"  {i}. {r}")
+
+def show_topic_report(topic_index: int):
+    row = fetch_post_by_index(topic_index)
+    if not row:
+        print("Invalid topic number (no such topic in DB).")
+        return
+
+    post_id, title, subreddit, url, a, b = row
+    is_entity_mode = bool(a and b)
+
+    print("\n" + "=" * 95)
+    print(f"TOPIC #{topic_index}: {title}")
+    print(f"subreddit=r/{subreddit} | post_id={post_id}")
+    if url:
+        print(f"url={url}")
+
+    if is_entity_mode:
+        print(f"entities = ({a}, {b})")
+        comments, used_len = load_comments_with_fallback(post_id, fetch_entity_labeled_comments)
+    else:
+        print("mode = topic stance")
+        print(f"topic = {title}")
+        comments, used_len = load_comments_with_fallback(post_id, fetch_topic_labeled_comments)
+
+    render_comment_report(comments, used_len)
 
 if __name__ == "__main__":
     import sys

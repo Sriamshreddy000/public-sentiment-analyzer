@@ -65,6 +65,7 @@ def menu():
                 ("extract_post_entities.py", "Extracting topic entities"),
                 ("clear_entity_stance.py", "Clearing stance table"),
                 ("analyze_entity_stance_auto.py", "Analyzing stance"),
+                ("analyze_topic_stance.py", "Analyzing topic stance"),
             ]
             for script, label in steps:
                 spinner_run(script, label)

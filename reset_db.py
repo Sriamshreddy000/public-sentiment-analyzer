@@ -16,10 +16,14 @@ def reset_all():
             conn.execute("DELETE FROM comment_entity_stance")
         except Exception:
             pass
+        try:
+            conn.execute("DELETE FROM comment_topic_stance")
+        except Exception:
+            pass
 
         conn.commit()
 
-    print("✅ Reset: cleared posts, comments, post_entities, comment_entity_stance")
+    print("✅ Reset: cleared posts, comments, post_entities, comment_entity_stance, comment_topic_stance")
 
 if __name__ == "__main__":
     reset_all()
