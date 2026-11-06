@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Public Sentiment Analyzer</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <h1>Public Sentiment Analyzer</h1>
+    <p>What are people actually arguing about on Reddit &mdash; and why?</p>
+  </div>
+  <div class="controls">
+    <label>Posts
+      <select id="opt-posts">
+        <option>5</option><option>10</option><option selected>15</option><option>25</option><option>40</option>
+      </select>
+    </label>
+    <label>Sort posts
+      <select id="opt-sort">
+        <option value="trending" selected>Trending (48h)</option>
+        <option value="newest">Newest</option>
+      </select>
+    </label>
+    <label>Comments / post
+      <select id="opt-comments">
+        <option>10</option><option selected>30</option><option>50</option><option>100</option><option>200</option>
+        <option value="all">All</option>
+      </select>
+    </label>
+    <label>Which comments
+      <select id="opt-order">
+        <option value="top" selected>Most upvoted</option>
+        <option value="newest">Newest</option>
+      </select>
+    </label>
+    <button id="refresh" class="btn">Refresh</button>
+  </div>
+</header>
+
+<div id="progress" class="progress hidden" role="status" aria-live="polite">
+  <div class="bar"><div id="progress-fill"></div></div>
+  <div class="ptext">
+    <span id="progress-text"></span>
+    <span id="progress-detail" class="muted"></span>
+  </div>
+</div>
+
+<div id="databar" class="databar muted"></div>
+
+<main class="layout">
+  <aside class="topics">
+    <h2>Topics</h2>
+    <ul id="topic-list"><li class="muted pad">Loading…</li></ul>
+  </aside>
+
+  <section class="report-pane">
+    <div id="report" class="report">
+      <div class="empty">
+        <h2>Pick a topic</h2>
+        <p>Select a topic on the left to see how commenters split, the keywords behind each side, and representative comments.</p>
+        <p class="muted small">Stance is predicted by a zero-shot model &mdash; treat results as directional, not ground truth.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

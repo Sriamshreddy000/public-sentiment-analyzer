@@ -8,6 +8,7 @@ import subprocess
 import sys
 import threading
 import time
+from collections import deque
 from pathlib import Path
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException
@@ -18,7 +19,8 @@ BASE = Path(__file__).resolve().parent
 os.chdir(BASE)  # the DB path is relative, so always work from the project folder
 
 import web_report  # noqa: E402
-from schemas import RefreshStatus, TopicReport, TopicSummary  # noqa: E402
+from schemas import (DataSummary, RefreshOptions, RefreshStatus,  # noqa: E402
+                     TopicReport, TopicSummary)
 
 app = FastAPI(title="Public Sentiment Analyzer")
 
@@ -28,7 +30,7 @@ if (BASE / "static").is_dir():
 # Same steps, same order as app.py option 2
 PIPELINE = [
     ("reset_db.py", "Resetting DB"),
-    ("fetch_rising.py", "Fetching trending posts"),
+    ("fetch_rising.py", "Fetching posts"),
     ("fetch_comments.py", "Fetching comments"),
     ("extract_post_entities.py", "Extracting topic entities"),
     ("clear_entity_stance.py", "Clearing stance table"),
@@ -36,24 +38,37 @@ PIPELINE = [
     ("analyze_topic_stance.py", "Analyzing topic stance"),
 ]
 
-job = {"running": False, "step": 0, "label": "", "error": None, "finished_at": None}
+job = {"running": False, "step": 0, "label": "", "detail": "", "error": None,
+       "finished_at": None, "options": None}
 lock = threading.Lock()
 
 
-def run_pipeline():
+def run_pipeline(opts: RefreshOptions):
     """Runs in a worker thread so the site stays responsive during a refresh."""
+    # config.py reads these, so every pipeline script sees the chosen settings
+    env = {**os.environ, "PYTHONUNBUFFERED": "1",
+           "PSA_POSTS": str(opts.posts), "PSA_SORT": opts.sort,
+           "PSA_COMMENTS": str(opts.comments), "PSA_COMMENT_ORDER": opts.comment_order}
     try:
         for i, (script, label) in enumerate(PIPELINE, start=1):
-            job.update(step=i, label=label)
-            proc = subprocess.run([sys.executable, script], cwd=BASE, capture_output=True, text=True)
-            if proc.returncode != 0:
-                tail = (proc.stderr or proc.stdout or "").strip().splitlines()[-5:]
-                job["error"] = f"{script} failed: " + " | ".join(tail)
+            job.update(step=i, label=label, detail="")
+            proc = subprocess.Popen([sys.executable, script], cwd=BASE, env=env, text=True,
+                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            tail = deque(maxlen=5)
+            for line in proc.stdout:  # stream output so the page can show live progress
+                line = line.strip()
+                if line:
+                    tail.append(line)
+                    job["detail"] = line[:160]
+            if proc.wait() != 0:
+                last = tail[-1] if tail else "no output"
+                job["error"] = f"{label} failed ({script}): {last[:300]}"
                 return
+        web_report.save_refresh_options(opts.model_dump(), int(time.time()))
     except Exception as exc:  # noqa: BLE001
         job["error"] = str(exc)
     finally:
-        job.update(running=False, finished_at=int(time.time()))
+        job.update(running=False, finished_at=int(time.time()), detail="")
 
 
 @app.get("/", include_in_schema=False)
@@ -77,13 +92,20 @@ def api_topic(n: int):
     return report
 
 
+@app.get("/api/summary", response_model=DataSummary)
+def api_summary():
+    return web_report.data_summary()
+
+
 @app.post("/api/refresh", status_code=202)
-def api_refresh(background: BackgroundTasks):
+def api_refresh(background: BackgroundTasks, opts: RefreshOptions | None = None):
+    opts = opts or RefreshOptions()
     with lock:
         if job["running"]:
             raise HTTPException(status_code=409, detail="Refresh already running")
-        job.update(running=True, step=0, label="Starting", error=None, finished_at=None)
-    background.add_task(run_pipeline)
+        job.update(running=True, step=0, label="Starting", detail="", error=None,
+                   finished_at=None, options=opts.model_dump())
+    background.add_task(run_pipeline, opts)
     return {"started": True}
 
 

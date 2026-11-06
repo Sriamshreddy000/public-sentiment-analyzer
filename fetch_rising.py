@@ -1,29 +1,20 @@
 import time
-import requests
 from db import init_db, upsert_post
+from sources.arctic_shift import fetch_recent_posts
+import config
 
-def fetch_rising(subreddit: str = "popular", limit: int = 15):
-    url = f"https://www.reddit.com/r/{subreddit}/rising.json"
-    headers = {"User-Agent": "reddit-sentiment-learning-script/0.1"}
-    params = {"limit": limit}
-
-    r = requests.get(url, headers=headers, params=params, timeout=20)
-    if r.status_code != 200:
-        raise RuntimeError(f"HTTP {r.status_code}: {r.text[:200]}")
-
-    data = r.json()
-    items = data["data"]["children"]
+def fetch_rising(subreddit: str = "popular", limit: int = 15, sort: str = "trending"):
+    # Reddit blocked logged-out .json in 2026, so posts now come from Arctic Shift:
+    # the most-discussed posts from the last 48h instead of Reddit's "rising" list.
+    items = fetch_recent_posts(subreddit=subreddit, limit=limit, sort=sort,
+                               hours_back=config.HOURS_BACK)
 
     fetched_utc = int(time.time())
     saved = 0
 
-    print(f"\nFetched {len(items)} items from r/{subreddit} rising:\n")
+    print(f"\nFetched {len(items)} {sort} posts from r/{subreddit} (via Arctic Shift):\n")
 
-    for i, item in enumerate(items, start=1):
-        p = item.get("data", {})
-        if not p.get("id") or not p.get("title"):
-            continue
-
+    for i, p in enumerate(items, start=1):
         upsert_post(p, fetched_utc)
         saved += 1
 
@@ -36,4 +27,4 @@ def fetch_rising(subreddit: str = "popular", limit: int = 15):
 
 if __name__ == "__main__":
     init_db()
-    fetch_rising(subreddit="worldnews", limit=40)
+    fetch_rising(subreddit=config.SUBREDDIT, limit=config.POSTS_LIMIT, sort=config.SORT)

@@ -1,6 +1,7 @@
 from db import get_conn, init_db
+import config
 
-def list_topics(limit=20):
+def list_topics(limit=config.POSTS_LIMIT):
     init_db()
     with get_conn() as conn:
         rows = conn.execute("""

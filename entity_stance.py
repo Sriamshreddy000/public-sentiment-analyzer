@@ -1,25 +1,27 @@
-from transformers import pipeline
+from nli_model import classify
 
-clf = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+KINDS = ("support", "oppose", "neutral")
+
+
+def _labels(entity: str):
+    return [
+        f"supports {entity}",
+        f"opposes {entity}",
+        f"is neutral or unclear about {entity}",
+    ]
+
+
+def stance_to_entity_batch(texts: list[str], entity: str):
+    """Returns [('support'|'oppose'|'neutral', score), ...] for each text."""
+    return [(KINDS[i], score) for i, score in classify(texts, _labels(entity))]
+
 
 def stance_to_entity(text: str, entity: str):
     """
     Returns: ('support'|'oppose'|'neutral', score)
     """
-    labels = [
-        f"supports {entity}",
-        f"opposes {entity}",
-        f"is neutral or unclear about {entity}"
-    ]
-    res = clf(text[:512], labels, multi_label=False)
-    best = res["labels"][0]
-    score = float(res["scores"][0])
+    return stance_to_entity_batch([text], entity)[0]
 
-    if best.startswith("supports"):
-        return "support", score
-    if best.startswith("opposes"):
-        return "oppose", score
-    return "neutral", score
 
 def combine_two_entities(entity_a, stance_a, score_a, entity_b, stance_b, score_b, thresh=0.60):
     # Direct support labels

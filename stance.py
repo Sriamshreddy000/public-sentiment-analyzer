@@ -1,8 +1,22 @@
-from transformers import pipeline
+from nli_model import classify
 
-# Zero-shot classifier: works without training
-# (Heavier model; later we can optimize)
-clf = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+# Zero-shot classifier (facebook/bart-large-mnli): works without training.
+# Model loading and batching live in nli_model.py.
+KINDS = ("support", "oppose", "neutral")
+
+
+def _labels(target: str):
+    return [
+        f"supports {target}",
+        f"opposes {target}",
+        f"is neutral or unclear about {target}",
+    ]
+
+
+def stance_toward_target_batch(texts: list[str], target: str):
+    """Returns [(support|oppose|neutral, score), ...] for each text."""
+    return [(KINDS[i], score) for i, score in classify(texts, _labels(target))]
+
 
 def stance_toward_target(text: str, target: str):
     """
@@ -13,21 +27,4 @@ def stance_toward_target(text: str, target: str):
     """
     if not text or not target:
         return None, None
-
-    # Hypotheses we want to test
-    labels = [
-        f"supports {target}",
-        f"opposes {target}",
-        f"is neutral or unclear about {target}"
-    ]
-
-    result = clf(text[:512], labels, multi_label=False)
-
-    best_label = result["labels"][0]
-    best_score = float(result["scores"][0])
-
-    if best_label.startswith("supports"):
-        return "support", best_score
-    if best_label.startswith("opposes"):
-        return "oppose", best_score
-    return "neutral", best_score
+    return stance_toward_target_batch([text], target)[0]

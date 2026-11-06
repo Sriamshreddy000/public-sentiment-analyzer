@@ -1,0 +1,75 @@
+:root{
+  --bg:#0f1115; --panel:#171a21; --panel2:#1d212a; --line:#2a2f3a;
+  --text:#e8eaf0; --muted:#8b93a7; --accent:#6ea8ff; --warn:#e8b45a;
+  --pro:#4cc38a; --anti:#ef6a6a; --neutral:#7b8394;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+/* App shell: header on top, two independently scrolling columns fill the rest */
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;
+  display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+.top{flex:none;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding:16px 28px;border-bottom:1px solid var(--line)}
+.brand h1{margin:0;font-size:20px}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.controls{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.controls label{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.controls select{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:7px 8px;font-size:13px}
+.controls select:disabled{opacity:.5}
+.btn{background:var(--accent);color:#0b1020;border:0;border-radius:8px;padding:8px 18px;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+.progress{flex:none;padding:10px 28px;border-bottom:1px solid var(--line);background:var(--panel);display:flex;align-items:center;gap:14px}
+.progress .bar{flex:0 0 220px;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+#progress-fill{height:100%;width:0;background:var(--accent);transition:width .4s}
+.ptext{display:flex;flex-direction:column;font-size:13px;min-width:0}
+#progress-detail{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.progress.error #progress-text{color:var(--anti)}
+.hidden{display:none !important}
+
+.databar{flex:none;padding:7px 28px;font-size:12px;border-bottom:1px solid var(--line)}
+.warn{color:var(--warn)}
+
+.layout{flex:1;min-height:0;display:grid;grid-template-columns:360px 1fr}
+.topics{overflow-y:auto;border-right:1px solid var(--line);padding:16px 0}
+.report-pane{overflow-y:auto}
+.topics h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 20px 10px}
+.topics ul{list-style:none;margin:0;padding:0}
+.topics li.item{padding:12px 20px;cursor:pointer;border-left:3px solid transparent}
+.topics li.item:hover{background:var(--panel)}
+.topics li.item.active{background:var(--panel2);border-left-color:var(--accent)}
+.topics .t{font-size:14px;line-height:1.35}
+.topics .meta{margin-top:4px;font-size:12px;color:var(--muted)}
+.muted{color:var(--muted)} .small{font-size:13px} .pad{padding:12px 20px}
+
+.report{padding:28px 36px 48px;max-width:960px}
+.empty{margin-top:60px}
+.report h2{margin:0 0 6px;font-size:22px;line-height:1.3}
+.sub{color:var(--muted);font-size:13px;margin-bottom:8px}
+.sub a{color:var(--accent);text-decoration:none}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:2px 10px;font-size:12px}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-top:18px}
+.card h3{margin:0 0 12px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.row{display:grid;grid-template-columns:150px 1fr 90px;gap:12px;align-items:center;margin:8px 0;font-size:14px}
+.track{height:12px;background:var(--panel2);border-radius:6px;overflow:hidden}
+.fill{height:100%;border-radius:6px;background:var(--c)}
+.pro{--c:var(--pro)} .anti{--c:var(--anti)} .neutral{--c:var(--neutral)}
+.lab{font-weight:600;color:var(--c);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.num{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.reason h4{margin:0 0 8px;color:var(--c);font-size:16px}
+.reason .kw{margin-bottom:12px}
+.kw .chip{border-color:var(--c)}
+blockquote{margin:8px 0;padding:8px 14px;border-left:3px solid var(--c);background:var(--panel2);border-radius:0 8px 8px 0;font-size:14px;color:#cfd3de}
+.note{color:var(--muted);font-size:13px;margin-top:12px}
+
+/* Small screens: back to one normal scrolling page */
+@media (max-width:800px){
+  body{height:auto;overflow:auto;display:block}
+  .layout{display:block}
+  .topics,.report-pane{overflow:visible}
+  .topics{border-right:0;border-bottom:1px solid var(--line)}
+  .row{grid-template-columns:110px 1fr 80px}
+  .report{padding:20px}
+}

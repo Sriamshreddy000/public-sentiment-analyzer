@@ -1,4 +1,5 @@
 from db import get_conn, init_db
+import config
 from entity_extractor import extract_entities
 
 # simple cleanup rules for V1
@@ -65,7 +66,7 @@ def pick_two_entities(entities):
         return deduped[0], None
     return None, None
 
-def fetch_posts(limit=40):
+def fetch_posts(limit=config.POSTS_LIMIT):
     with get_conn() as conn:
         return conn.execute("""
             SELECT post_id, title
@@ -97,7 +98,7 @@ def main():
     init_db()
     ensure_post_entities_table()
 
-    posts = fetch_posts(40)
+    posts = fetch_posts()
     print(f"Scanning {len(posts)} posts for entities...\n")
 
     for post_id, title in posts:
