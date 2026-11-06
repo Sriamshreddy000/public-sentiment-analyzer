@@ -1,0 +1,9 @@
+# web
+fastapi>=0.110
+uvicorn>=0.29
+# data + NLP (used by the existing pipeline)
+requests
+scikit-learn
+spacy
+transformers
+torch
